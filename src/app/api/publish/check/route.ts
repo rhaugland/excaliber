@@ -25,17 +25,19 @@ export async function POST(request: NextRequest) {
   // Publish each due post directly (no self-HTTP call)
   let published = 0;
   for (const post of duePosts) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profile = (post as any).client_profile;
     try {
       const { data: secret } = await supabase
         .from('vault.decrypted_secrets')
         .select('decrypted_secret')
-        .eq('id', post.client_profile.oauth_token_vault_id)
+        .eq('id', profile.oauth_token_vault_id)
         .single();
 
       if (!secret) continue;
 
       const tokens = JSON.parse(secret.decrypted_secret);
-      const authorUrn = `urn:li:person:${post.client_profile.linkedin_user_id}`;
+      const authorUrn = `urn:li:person:${profile.linkedin_user_id}`;
 
       await publishPost(tokens.access_token, authorUrn, post.content);
 

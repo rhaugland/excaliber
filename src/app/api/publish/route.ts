@@ -17,17 +17,20 @@ export async function POST(request: NextRequest) {
 
   if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profile = (post as any).client_profile;
+
   // Retrieve token from Vault
   const { data: secret } = await supabase
     .from('vault.decrypted_secrets')
     .select('decrypted_secret')
-    .eq('id', post.client_profile.oauth_token_vault_id)
+    .eq('id', profile.oauth_token_vault_id)
     .single();
 
   if (!secret) return NextResponse.json({ error: 'Token not found' }, { status: 401 });
 
   const tokens = JSON.parse(secret.decrypted_secret);
-  const authorUrn = `urn:li:person:${post.client_profile.linkedin_user_id}`;
+  const authorUrn = `urn:li:person:${profile.linkedin_user_id}`;
 
   // Retry logic
   let lastError: Error | null = null;
